@@ -140,17 +140,4 @@
                         <div class="author">By ${post.author}</div>
                     </div>
                 `;
-            }).join('');
-        }
-
-        function deleteWork(id) {
-            if(confirm("Are you sure you want to delete your post?")) {
-                let db = JSON.parse(localStorage.getItem('swuffa_db')) || [];
-                db = db.filter(p => p.id !== id);
-                localStorage.setItem('swuffa_db', JSON.stringify(db));
-                showPosts();
-            }
-        }
-    </script>
-</body>
-</html>
+        
