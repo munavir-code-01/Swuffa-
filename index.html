@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swuffa | Secure Student Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { margin: 30px 0; text-align: center; }
+        h1 { color: #1a73e8; font-size: 2.5rem; margin: 0; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        
+        /* Box Styling */
+        .card { width: 260px; height: 160px; background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card:hover { transform: translateY(-8px); background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+
+        /* Pages */
+        .page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .content-wrapper { max-width: 500px; margin: auto; }
+        .back-btn { color: #1a73e8; cursor: pointer; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+
+        /* Form */
+        .form-box { background: #f9f9f9; padding: 20px; border-radius: 15px; border: 1px solid #ddd; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: #1a73e8; color: white; padding: 12px; border: none; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-view { background: #34a853; }
+
+        /* Post Items */
+        .post-item { background: white; padding: 15px; margin-bottom: 15px; border-radius: 10px; border-left: 5px solid #1a73e8; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: #ff4d4d; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+    <header id="main-header">
+        <h1>SWUFFA</h1>
+        <p>Your Creative Portal</p>
+    </header>
+
+    <div class="container" id="home-page">
+        <div class="card" onclick="openPage('submit-page', 'Story')"><h2>Students Story</h2><p>Read & Write</p></div>
+        <div class="card" onclick="openPage('submit-page', 'Poem')"><h2>Students Poem</h2><p>Read & Write</p></div>
+        <div class="card" onclick="openPage('submit-page', 'Article')"><h2>Students Article</h2><p>Read & Write</p></div>
+    </div>
+
+    <div id="submit-page" class="page">
+        <div class="content-wrapper">
+            <div class="back-btn" onclick="closeAll()">&#8592; Back Home</div>
+            <h2 id="submit-title">Submit</h2>
+            <div class="form-box">
+                <input type="text" id="user-name" placeholder="Your Name">
+                <input type="text" id="work-title" placeholder="Work Title">
+                <textarea id="work-content" placeholder="Write your content here..."></textarea>
+                <button class="btn" onclick="submitWork()">Publish Now</button>
+                <button class="btn btn-view" onclick="showPosts()">View Published Works</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-page" class="page">
+        <div class="content-wrapper">
+            <div class="back-btn" onclick="openPage('submit-page', currentType)">&#8592; Back to Submit</div>
+            <h2 id="view-title">Gallery</h2>
+            <div id="posts-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentType = "";
+        
+        // ഓരോ ഫോണിനും ഒരു തനിമയുള്ള ഐഡി ഉണ്ടാക്കുന്നു
+        if (!localStorage.getItem('user_device_id')) {
+            localStorage.setItem('user_device_id', 'device_' + Date.now() + Math.random().toString(36).substr(2, 9));
+        }
+        const myDeviceId = localStorage.getItem('user_device_id');
+
+        function openPage(pageId, type) {
+            closeAll();
+            currentType = type || currentType;
+            document.getElementById(pageId).style.display = 'block';
+            document.getElementById('main-header').style.display = 'none';
+            document.getElementById('home-page').style.display = 'none';
+            if(pageId === 'submit-page') document.getElementById('submit-title').innerText = "Submit " + currentType;
+        }
+
+        function closeAll() {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById('main-header').style.display = 'block';
+            document.getElementById('home-page').style.display = 'flex';
+        }
+
+        function submitWork() {
+            const name = document.getElementById('user-name').value;
+            const title = document.getElementById('work-title').value;
+            const content = document.getElementById('work-content').value;
+
+            if(!name || !title || !content) { alert("Please fill all fields!"); return; }
+
+            // പോസ്റ്റിനൊപ്പം ഡിവൈസ് ഐഡി കൂടി സേവ് ചെയ്യുന്നു
+            const newEntry = { 
+                id: Date.now(), 
+                deviceId: myDeviceId, 
+                category: currentType, 
+                author: name, 
+                heading: title, 
+                body: content 
+            };
+            
+            let db = JSON.parse(localStorage.getItem('swuffa_db')) || [];
+            db.unshift(newEntry);
+            localStorage.setItem('swuffa_db', JSON.stringify(db));
+
+            alert("Published Successfully!");
+            document.getElementById('user-name').value = "";
+            document.getElementById('work-title').value = "";
+            document.getElementById('work-content').value = "";
+            showPosts();
+        }
+
+        function showPosts() {
+            openPage('view-page', currentType);
+            const container = document.getElementById('posts-container');
+            const db = JSON.parse(localStorage.getItem('swuffa_db')) || [];
+            const filtered = db.filter(item => item.category === currentType);
+            document.getElementById('view-title').innerText = currentType + " Gallery";
+
+            if(filtered.length === 0) { container.innerHTML = "<p>No posts yet.</p>"; return; }
+
+            container.innerHTML = filtered.map(post => {
+                // സ്വന്തം പോസ്റ്റ് ആണെങ്കിൽ മാത്രം ഡിലീറ്റ് ബട്ടൺ കാണിക്കുക
+                const deleteBtn = (post.deviceId === myDeviceId) 
+                    ? `<button class="delete-btn" onclick="deleteWork(${post.id})">Delete My Post</button>` 
+                    : "";
+
+                return `
+                    <div class="post-item">
+                        ${deleteBtn}
+                        <h3>${post.heading}</h3>
+                        <p>${post.body}</p>
+                        <div class="author">By ${post.author}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteWork(id) {
+            if(confirm("Are you sure you want to delete your post?")) {
+                let db = JSON.parse(localStorage.getItem('swuffa_db')) || [];
+                db = db.filter(p => p.id !== id);
+                localStorage.setItem('swuffa_db', JSON.stringify(db));
+                showPosts();
+            }
+        }
+    </script>
+</body>
+</html>
